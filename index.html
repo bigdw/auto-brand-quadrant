@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US Automotive Products — Competitive Quadrant 2025</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #111111;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .page {
+      background: #1a1a1a;
+      color: #e0e0e0;
+      width: 65vw;
+      height: 90vh;
+      border-radius: 16px;
+      padding: 1.5vh 2vw;
+      border: 0.5px solid #2e2e2e;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 13px;
+      font-weight: 500;
+      color: #888;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.75vh;
+      flex-shrink: 0;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 0.75vh;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 0.5px solid #444;
+      background: #242424;
+      color: #888;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      font-family: inherit;
+      text-transform: capitalize;
+    }
+
+    .tab:hover { border-color: #666; color: #ccc; }
+
+    .tab.active {
+      background: #e0e0e0;
+      color: #1a1a1a;
+      border-color: transparent;
+      font-weight: 500;
+    }
+
+    .chart-layout {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      flex: 1;
+      min-height: 0;
+      margin-bottom: 3px;
+    }
+
+    .y-label {
+      font-size: 9px;
+      color: #555;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      user-select: none;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chart-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .axis-label-top {
+      font-size: 9px;
+      color: #555;
+      text-align: center;
+      margin-bottom: 3px;
+      flex-shrink: 0;
+    }
+
+    .quadrant-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+    }
+
+    canvas#qc { width: 100%; height: 100%; display: block; }
+
+    .axis-label-bottom {
+      font-size: 9px;
+      color: #555;
+      text-align: center;
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+
+    .x-axis-row {
+      font-size: 9px;
+      color: #555;
+      text-align: center;
+      padding-left: 20px;
+      flex-shrink: 0;
+      margin-bottom: 2px;
+    }
+
+    .quad-label {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 500;
+      opacity: 0.28;
+      pointer-events: none;
+      color: #ccc;
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: #252525;
+      border: 0.5px solid #555;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #e0e0e0;
+      display: none;
+      z-index: 10;
+      max-width: 280px;
+      line-height: 1.55;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 8px;
+      border-top: 0.5px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: #777;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .source-note {
+      font-size: 8px;
+      color: #3a3a3a;
+      margin-top: 6px;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <h1>US Automotive Products &mdash; Competitive Quadrant 2025</h1>
+
+  <div class="tab-bar" id="tabs"></div>
+
+  <div class="chart-layout">
+    <span class="y-label">Value &rarr; Quality</span>
+    <div class="chart-col">
+      <div class="axis-label-top">Quality</div>
+      <div class="quadrant-wrap">
+        <canvas id="qc"></canvas>
+        <div class="tooltip" id="tip"></div>
+        <div class="quad-label" style="top:5%;left:2%;">Reliable</div>
+        <div class="quad-label" style="top:5%;right:2%;text-align:right;">Premium</div>
+        <div class="quad-label" style="bottom:5%;left:2%;">Budget</div>
+        <div class="quad-label" style="bottom:5%;right:2%;text-align:right;">Challenger</div>
+      </div>
+      <div class="axis-label-bottom">Value</div>
+    </div>
+  </div>
+
+  <div class="x-axis-row">&larr; Inferior &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Inspirational &rarr;</div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="source-note" id="sourceNote"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const C = {
+  teal:"#1D9E75", blue:"#378ADD", amber:"#EF9F27", coral:"#D85A30",
+  purple:"#7F77DD", pink:"#D4537E", green:"#639922", red:"#E24B4A",
+  gray:"#888780", sky:"#38BDF8"
+};
+
+const CATEGORIES = {
+  "Full synthetic": {
+    source: "Sources: SlashGear synthetic oil rankings (Apr 2025) — Valvoline 26K+ Amazon ratings at 4.8★, Pennzoil ~13K at 4.8★, Castrol ~2K at 4.8★; ASAP Oil US Rankings Jan 2026 — Mobil 1 & Castrol lead; Accio Best Engine Oil 2025; Cerma Treatment guide (Feb 2026); Heavy Vehicle Inspection brand analysis; NOLN/Statista 2018 fast-lube survey. Brand-owned sources excluded.",
+    brands: [
+      { name:"Mobil 1",      x:90, y:92, color:C.blue,   note:"#1 synthetic brand globally by retail sales per Cerma/Accio; Amazon best-seller in synthetics; top US motor oil rankings Jan 2026 (ASAP Oil); official oil of NASCAR; 15K-mile drain interval on Extended Performance line" },
+      { name:"Pennzoil",     x:82, y:88, color:C.teal,   note:"~13,000 Amazon ratings at 4.8★ (SlashGear Apr 2025); PurePlus GTL technology; #1 fast-lube volume 31+ consecutive years (NOLN 2018); daily driver & turbocharged engine recommended by Simi Valley CDJR guide" },
+      { name:"Valvoline",    x:80, y:85, color:C.amber,  note:"26,000+ Amazon ratings at 4.8★ — highest review count of any motor oil on Amazon (SlashGear Apr 2025); strong value at ~$27/5qt; meets 5 API/ILSAC standards; acquired by Saudi Aramco Apr 2025" },
+      { name:"Castrol",      x:78, y:82, color:C.coral,  note:"~2,000 Amazon ratings at 4.8★; OEM partnerships: Honda, Ford, Volvo, Jaguar, Subaru (SlashGear); Titanium technology; ASAP Oil top US ranking Jan 2026; best for European vehicles & GDI engines" },
+      { name:"AMSOIL",       x:85, y:80, color:C.purple, note:"25,000-mile drain guarantee; PAO/ester base stocks; primarily DTC — limited mass retail; enthusiast & fleet premium segment; ~6K reviews at 5★ on own store (SlashGear)" },
+      { name:"Royal Purple", x:82, y:72, color:C.pink,   note:"Performance enthusiast segment; Synerlec additive reduces friction by ~50%; specialty retail; recommended for high-performance and high-mileage engines (Simi Valley CDJR guide)" },
+      { name:"Quaker State", x:50, y:58, color:C.gray,   note:"Shell umbrella alongside Pennzoil; value tier; 300K mile warranty on specialty oils; Hyundai endorsed brand (SlashGear Apr 2025); widely available at Walmart" },
+      { name:"SuperTech",    x:22, y:38, color:C.gray,   note:"Walmart private label; manufactured by major refiners; meets API SP/GF-6 — same certification as premium brands; lowest price point in category; 0-15% above minimums (Heavy Vehicle Inspection)" },
+      { name:"Lucas Oil",    x:48, y:42, color:C.red,    note:"Niche in full synthetic; stronger brand equity in other categories (greases, additives); limited independent editorial recognition in this segment" },
+    ]
+  },
+  "High mileage": {
+    source: "Sources: SlashGear High Mileage Oil Ranked (Jan 2024); Accio Best Selling Engine Oil 2025 — Valvoline MaxLife top Amazon seller; Cadence Petroleum guide; NOLN/Statista 2018; BobIsTheOilGuy forum data. Brand-owned sources excluded.",
+    brands: [
+      { name:"Valvoline",    x:88, y:90, color:C.amber,  note:"MaxLife — category-defining high mileage brand; top-selling high mileage oil on Amazon (Accio 2025); most variants (4 lines); seal conditioners, friction reducers; 500K+ mile testimonial from Suburban owner (BobIsTheOilGuy); official oil for NASCAR, NHRA, Formula Drift" },
+      { name:"Pennzoil",     x:80, y:85, color:C.teal,   note:"Platinum High Mileage Full Synthetic — 3 variants; wide viscosity coverage 0W-20 to 10W-40; GTL natural gas base; good consumer reputation cross-checked with FakeSpot (SlashGear Jan 2024); Shell umbrella" },
+      { name:"Castrol",      x:75, y:82, color:C.coral,  note:"GTX High Mileage — more popular than Edge HM for DIYers (Cadence Petroleum); Phosphorous Replacement Technology protects emission systems; strong availability at Walmart and auto parts stores" },
+      { name:"Mobil 1",      x:82, y:80, color:C.blue,   note:"High Mileage & Extended Performance High Mileage — 4 product variants; 75K mile+ focus; 5,000-mile OCI or manufacturer interval (Cadence Petroleum guide); premium positioning in category" },
+      { name:"Quaker State", x:52, y:65, color:C.gray,   note:"High Mileage synthetic blend; 3 variants; Defy HM line praised for 200K–300K mile engines (Axle Advisor); strong value positioning; Shell umbrella" },
+      { name:"Havoline",     x:55, y:62, color:C.green,  note:"Chevron-owned; solid mid-market high mileage option; Pro-DS line; available at AutoZone and O'Reilly; strong regional presence" },
+      { name:"Lucas Oil",    x:58, y:55, color:C.red,    note:"High Mileage Oil Stabilizer — top-rated in additive segment for 75K+ mile engines (The Motor Guy, Mechanic Base); less well-known as a standalone motor oil vs. as an additive" },
+      { name:"SuperTech",    x:20, y:40, color:C.gray,   note:"Walmart private label high mileage; very low price; meets API minimums; limited independent reviews vs. named brands" },
+    ]
+  },
+  "Synthetic blend": {
+    source: "Sources: NOLN/Statista 2018 fast-lube survey; AutoGuide conventional/blend rankings; ASAP Oil US Rankings Jan 2026; Accio Best Engine Oil; SlashGear brand rankings. Brand-owned sources excluded.",
+    brands: [
+      { name:"Pennzoil",     x:80, y:85, color:C.teal,   note:"Pennzoil Platinum Blend — #1 fast-lube volume brand 31+ years (NOLN 2018); Shell umbrella; strong consumer loyalty; PurePlus GTL technology even in blend formulations; widely available" },
+      { name:"Valvoline",    x:78, y:82, color:C.amber,  note:"Advanced Blend and Daily Protection lines — strong retail presence at Walmart and auto parts stores; trusted heritage brand; competitive pricing; solid consumer and professional endorsement" },
+      { name:"Castrol",      x:72, y:78, color:C.coral,  note:"GTX Blend — ASAP Oil top US ranking Jan 2026; widely available in conventional to blend range; trusted for balanced performance; #2–3 in fast-lube PCMO market (NOLN)" },
+      { name:"Quaker State", x:60, y:68, color:C.gray,   note:"Advanced Durability synthetic blend — Shell umbrella; value-competitive pricing; 300K-mile warranty on specialty lines; Hyundai endorsed (SlashGear); widely stocked" },
+      { name:"Havoline",     x:55, y:65, color:C.green,  note:"Chevron Havoline Synthetic Blend — Pro-DS line; strong in blends; good availability; Chevron-owned with integrated base oil supply chain" },
+      { name:"Mobil",        x:62, y:72, color:C.blue,   note:"Mobil Super Synthetic Blend — mid-range positioning; #5 overall PCMO market but Mobil 1 dominates synthetic (NOLN); widely available at Walmart, AutoZone" },
+      { name:"Lucas Oil",    x:45, y:40, color:C.red,    note:"Limited dedicated synthetic blend motor oil presence; brand is stronger in additives, stabilizers, and greases than in standalone motor oil segments" },
+      { name:"SuperTech",    x:22, y:35, color:C.gray,   note:"Walmart private label blend; meets API SP; price leader; 0-15% above minimum standards (Heavy Vehicle Inspection); limited independent editorial recognition" },
+    ]
+  },
+  "Conventional": {
+    source: "Sources: NOLN/Statista 2018 fast-lube survey (Pennzoil #1 at 39% share); AutoGuide Best Conventional Motor Oils; ASAP Oil US Rankings Jan 2026; SlashGear brand rankings (Apr 2025). Brand-owned sources excluded.",
+    brands: [
+      { name:"Pennzoil",     x:75, y:85, color:C.teal,   note:"#1 fast-lube conventional volume; 39% fast-lube market share (NOLN 2018); cleans up to 40% of engine sludge on first change (AutoGuide); Ferrari official oil supplier; widely available everywhere" },
+      { name:"Castrol GTX",  x:72, y:82, color:C.coral,  note:"One of the original mass-market conventional oils; #2–3 PCMO market position (NOLN); strong OEM and dealership presence; widely available at Walmart and auto parts stores" },
+      { name:"Valvoline",    x:70, y:80, color:C.amber,  note:"Daily Protection — added detergents, API SN Plus; sludge and deposit protection; easy-pour packaging; strong retail shelf presence at Walmart, AutoZone, Amazon" },
+      { name:"Quaker State", x:62, y:72, color:C.gray,   note:"Advanced Durability — Shell umbrella; #2–4 PCMO market (NOLN); widely available; strong value with acid-neutralizing additives; Hyundai dealer partner" },
+      { name:"Havoline",     x:58, y:70, color:C.green,  note:"Chevron Havoline conventional — Pro RS Renewable with 25% plant-based oil; AutoGuide top-pick for conventional (Mar 2025); eco-friendly credentials; available at AutoZone" },
+      { name:"Mobil",        x:55, y:65, color:C.blue,   note:"Mobil Super conventional — #5 overall PCMO brand (NOLN); strong brand heritage; less retail presence than top-3 for conventional specifically; strong name recognition" },
+      { name:"Lucas Oil",    x:42, y:38, color:C.red,    note:"Conventional motor oil available but not a meaningful competitor in this segment; brand equity concentrated in additives and specialty lubricants" },
+      { name:"SuperTech",    x:20, y:32, color:C.gray,   note:"Walmart private label conventional; meets API SP; cheapest widely-available oil; 50% recycled oil variant noted by Scientific American; budget positioning" },
+    ]
+  },
+  "Greases": {
+    source: "Sources: ReportPrime Automotive Grease Market Companies; Mordor Intelligence US Automotive Lubricants Market (Nov 2025); Grand View Research.",
+    brands: [
+      { name:"Mobilgrease",     x:82, y:88, color:C.blue,   note:"#2 global grease supplier; leads synthetic/high-temp segment" },
+      { name:"Castrol",         x:72, y:74, color:C.coral,  note:"Balanced across multipurpose grades" },
+      { name:"Valvoline",       x:62, y:70, color:C.amber,  note:"SynPower line; strong quick-lube retail channel" },
+      { name:"Texaco/Havoline", x:58, y:65, color:C.green,  note:"Chevron; solid mid-market presence" },
+      { name:"Lucas Oil",       x:80, y:72, color:C.red,    note:"Red N'Tacky leader; 2024 Indiana capacity expansion (Mordor)" },
+      { name:"AMSOIL",          x:78, y:68, color:C.purple, note:"Strong synthetic grease lineup; enthusiast segment" },
+      { name:"Royal Purple",    x:74, y:62, color:C.pink,   note:"Performance enthusiast; specialty segment" },
+      { name:"Quaker State",    x:35, y:44, color:C.gray,   note:"Limited grease portfolio" },
+      { name:"SuperTech",       x:18, y:25, color:C.gray,   note:"Entry-level; Walmart distribution only" },
+    ]
+  },
+  "Fuel treatments": {
+    source: "Sources: AutoGuide; SlashGear; CarTreatments; Mechanics Hub; Performance Chip Tuning; MarketsandMarkets Fuel Additives Market. Brand-owned sources excluded.",
+    brands: [
+      { name:"Chevron Techron", x:85, y:88, color:C.teal,   note:"PEA technology; #1 rated by AutoGuide, SlashGear, CarTreatments" },
+      { name:"Sea Foam",        x:70, y:78, color:C.blue,   note:"Wide retail presence; strong DIY recognition since 1930s. No independent audit confirms top-seller status." },
+      { name:"Lucas Oil",       x:88, y:80, color:C.red,    note:"Leads diesel treatment, full system cleaner & octane booster segment per independent editorial rankings (AutoGuide)" },
+      { name:"STP",             x:52, y:58, color:C.gray,   note:"Mass-market; broad retail shelf presence" },
+      { name:"AMSOIL PI",       x:84, y:76, color:C.purple, note:"High PEA concentration; performance segment" },
+      { name:"Royal Purple",    x:80, y:70, color:C.pink,   note:"Max Clean; performance positioning" },
+      { name:"Sta-Bil",         x:60, y:60, color:C.amber,  note:"Dominates fuel stabilizer sub-category per independent reviews" },
+      { name:"Gumout",          x:40, y:45, color:C.gray,   note:"Value fuel injector cleaner; mass retail" },
+    ]
+  },
+  "Spray wax": {
+    source: "Sources: Business Research Insights (brand market share); Future Market Insights USA Car Wax Market; IndexBox; The Drive; CarCareReviews. Brand-owned sources excluded.",
+    brands: [
+      { name:"Meguiar's",       x:80, y:88, color:C.teal,   note:"~20% car wax market share (Business Research Insights)" },
+      { name:"Turtle Wax",      x:72, y:80, color:C.blue,   note:"~18% market share; strong innovation in ceramic hybrids" },
+      { name:"Chemical Guys",   x:78, y:78, color:C.amber,  note:"~12% market share; strong e-commerce & enthusiast brand" },
+      { name:"Mothers",         x:65, y:65, color:C.green,  note:"US-based; eco-friendly focus; 15–20% combined share with Griot's (Future Market Insights)" },
+      { name:"Armor All",       x:45, y:50, color:C.gray,   note:"Mass-market volume leader; lower enthusiast ratings" },
+      { name:"Lucas Oil",       x:68, y:65, color:C.red,    note:"Slick Mist Speed Wax; Amazon Best Seller in Waxes (9K+ units/month); wide retail availability at Walmart, AutoZone, NAPA; Ceramic Speed Wax variant added; strong loyalty among DIY and powersports users" },
+    ]
+  },
+  "Ceramic spray": {
+    source: "Sources: AutoGuide (Editor's Pick); Car Talk; Apex Auto Pros (Oct 2025); Ethos Car Care (Mar 2026); CeramicCoatExpert; CarCareReviews; Dmitry's Garage independent durability tests; Amazon review counts & ratings. Brand-owned sources excluded.",
+    brands: [
+      { name:"Meguiar's",       x:88, y:90, color:C.teal,   note:"Hybrid Ceramic Wax — 7,581 Amazon reviews at 4.5★ (highest review count in category); named Best Ceramic Spray Detailer by AutoGuide; spray-on/rinse-off application praised across independent tests" },
+      { name:"Turtle Wax",      x:82, y:85, color:C.blue,   note:"Hybrid Solutions — self-described #1 selling ceramic spray; top-rated for ease-of-use by Apex Auto Pros, CeramicCoatExpert, Ethos Car Care; 21-wash durability in Dmitry's Garage independent test; strong Walmart/mass retail volume" },
+      { name:"Chemical Guys",   x:75, y:74, color:C.amber,  note:"HydroCharge & Hyperwax — Car Talk budget pick; CarCareReviews: better shine than Meguiar's but shorter durability at higher price; strong e-commerce presence" },
+      { name:"Mothers CMX",     x:70, y:72, color:C.green,  note:"CMX Ceramic Spray — widely available at auto parts stores; strong independent reviews; no-hose application advantage over Meguiar's; solid mid-market choice" },
+      { name:"Lucas Oil",       x:68, y:62, color:C.red,    note:"Slick Mist Ceramic Speed Wax — SiO2 hybrid; positive Amazon customer reviews; wide retail availability (Walmart, AutoZone, NAPA); newer entrant vs. top-tier; strong crossover with existing Slick Mist user base" },
+      { name:"Shine Armor",     x:52, y:48, color:C.gray,   note:"Heavy social/DTC marketing and high brand awareness; mixed independent performance reviews; CeramicCoatExpert: functions more as a sealant than true ceramic" },
+    ]
+  },
+  "Tire & trim": {
+    source: "Sources: The Drive (Best Overall: Meguiar's Insane Shine); Automoblog (Chemical Guys TVD-107 top pick, 31K+ Amazon reviews at 4.5★); Amazon Best Sellers Tire Care list; Men's Journal (Meguiar's Hot Shine 20K+ units/month on Amazon); Fresh-Layer professional detailer survey (Jul 2025); CarCareReviews; Standard Touring (Jan 2026). Brand-owned sources excluded.",
+    brands: [
+      { name:"Chemical Guys",  x:85, y:88, color:C.amber,  note:"TVD-107 / Tire Kicker — 31,000+ Amazon reviews at 4.5★ (Automoblog); Amazon Best Seller in Tire Care; Tire Kicker consistently tops best-seller list; VRP rated best overall spray by multiple independent reviewers; 8+ tire shine SKUs" },
+      { name:"Meguiar's",      x:82, y:86, color:C.teal,   note:"Hot Shine Tire Foam — 20,000+ units sold per month on Amazon, #1 bestseller (Men's Journal Jul 2025); Insane Shine rated Best Overall by The Drive; Endurance Gel rated best premium durability by Fresh-Layer" },
+      { name:"Mothers",        x:68, y:70, color:C.green,  note:"Back-to-Black and VLR lines; widely available at AutoZone, Walmart, Amazon; solid mid-market presence; strong for trim restoration" },
+      { name:"Armor All",      x:48, y:55, color:C.gray,   note:"Extreme Tire Shine — highest mass-market volume; ubiquitous retail presence; lower independent ratings on longevity and residue vs. premium brands" },
+      { name:"303 Products",   x:70, y:74, color:C.blue,   note:"303 Tire Balm — top-rated for UV protection and natural satin finish; zero-sling formula praised by enthusiasts; available at auto parts stores and Amazon" },
+      { name:"Turtle Wax",     x:60, y:62, color:C.sky,    note:"Wet n' Black and T-18 — widely available at Walmart; Automoblog top-5 pick; good durability in independent wash tests" },
+      { name:"Lucas Oil",      x:65, y:60, color:C.red,    note:"Slick Mist Tire & Trim Shine — available at Walmart, AutoZone, NAPA; strong crossover loyalty from Slick Mist Speed Wax users; positive consumer reviews; less independent editorial coverage than top-tier" },
+      { name:"STP",            x:38, y:42, color:C.gray,   note:"Value tier; mass retail presence at Walmart and auto parts stores; limited independent performance recognition" },
+    ]
+  },
+  "Interior spray": {
+    source: "Sources: Automoblog independent test (Jul 2025) — Chemical Guys #1, Meguiar's 4.6★/2,400+ Amazon ratings; The Drive head-to-head — Mothers #1 Overall, 303 Best Value; Karen's Green Cleaning (Oct 2025); Amazon review data. Brand-owned sources excluded. Griot's Garage, Sonax, and Adam's Polishes removed — pro/specialty channel, not widely available to DIY consumers.",
+    brands: [
+      { name:"Chemical Guys",  x:82, y:88, color:C.amber,  note:"Total Interior Cleaner — #1 pick by Automoblog independent test (2025); ceramic interior spray praised in The Drive; widely available Walmart, Amazon, AutoZone; all-surface formula including screens and leather" },
+      { name:"Meguiar's",      x:80, y:85, color:C.teal,   note:"Ultimate Interior Detailer — 4.6★ with 2,400+ Amazon ratings (Automoblog); best UV protection in independent test; Quik Interior Detailer top-rated on Auto Geek forum; available everywhere; non-greasy satin finish" },
+      { name:"303 Products",   x:76, y:84, color:C.blue,   note:"303 Interior Cleaner & Aerospace Protectant — rated Best Value and best dust repellent by The Drive head-to-head; consistently top-ranked as upgrade from Armor All; available at auto parts stores and Amazon" },
+      { name:"Mothers",        x:68, y:72, color:C.green,  note:"Speed Interior Detailer — rated #1 Overall by The Drive independent head-to-head test; satin finish, no greasy residue, mild scent; widely available at AutoZone, Walmart, Amazon" },
+      { name:"Turtle Wax",     x:60, y:62, color:C.sky,    note:"ICE Total Interior Cleaner — solid Armor All alternative per Karen's Green Cleaning; all-surface safe including touchscreens; fresh scent; widely available at Walmart and auto parts stores" },
+      { name:"Armor All",      x:45, y:50, color:C.gray,   note:"Original Protectant & wipes — ~9,000 Amazon ratings at 4.6★ on wipes (Automoblog); largest mass-market volume by far; lower independent ratings on residue, longevity, and glare; enthusiast community consistently recommends alternatives" },
+      { name:"Lucas Oil",      x:58, y:58, color:C.red,    note:"Slick Mist Interior Detailer — available at Walmart, AutoZone, NAPA; strong brand loyalty from existing Slick Mist users; covers plastic, vinyl, leather, rubber; limited independent editorial coverage vs. top-tier" },
+    ]
+  },
+  "Engine oil additive": {
+    source: "Sources: AutoGuide top pick (Lucas); BestReviews.guide 2025 — Lucas & Marvel top consumer picks; Amazon Best Sellers Engine & Oil Fluid Additives (Sea Foam SF-16 6-pack #1, Marvel Mystery Oil prominent); Liqui Moly Cera Tec ~7K Amazon ratings at 4.7★; Cerma Treatment guide (Feb 2026); Mechanic Base (Nov 2025); Jalopnik (Jun 2025). BG Products, Archoil, and AMSOIL removed — professional/shop channel or DTC-only, not widely available to DIY consumers at mass retail. Brand-owned sources excluded.",
+    brands: [
+      { name:"Lucas Oil",         x:85, y:88, color:C.red,    note:"Heavy Duty Oil Stabilizer — AutoGuide #1 overall pick; BestReviews.guide top consumer pick; immediate, visible results on valvetrain noise and oil pressure; widely available at Walmart, AutoZone, NAPA, Amazon; demo display at auto parts stores nationwide; multi-use in engines, transmissions, and gear boxes" },
+      { name:"Liqui Moly",        x:82, y:85, color:C.blue,   note:"Cera Tec — ~7,000 Amazon ratings at 4.7★; ceramic micro-particles bond to metal surfaces for up to 30K-mile protection interval; available at AutoZone and Walmart; measurable friction/noise reduction in independent tests (Quora/Hyundai Forums); enthusiast and professional endorsement" },
+      { name:"Sea Foam",          x:75, y:80, color:C.teal,   note:"SF-16 Motor Treatment — Amazon Best Seller #1 in Engine & Oil Fluid Additives (6-pack); EPA registered; dual oil/fuel use; widely available everywhere; strong DIY loyalty for sludge cleaning, deposit removal, and fuel stabilization; petroleum-based formula, no harsh detergents" },
+      { name:"Marvel Mystery Oil", x:65, y:72, color:C.amber, note:"Original oil enhancer and fuel additive since 1923 — Amazon best-seller list regular; AutoGuide recommended; dual oil/fuel application; compatible with gas, diesel, and biodiesel; widely available at Walmart, AutoZone, NAPA; BestReviews.guide top pick; best for preventive maintenance and seasonal storage" },
+      { name:"Rislone",           x:62, y:68, color:C.sky,    note:"High Mileage Compression Repair — Amazon best-seller list presence; available at AutoZone, Walmart, Amazon; ring seal formulation for compression restoration; solid mid-market positioning for high-mileage problem-solving" },
+      { name:"STP",               x:48, y:55, color:C.gray,   note:"Oil Treatment — legacy brand with mass retail ubiquity (Walmart, AutoZone, every gas station); Jalopnik identifies as a 'band-aid for sick motors' — best suited to worn or high-mileage engines; limited independent endorsement vs. newer competitors" },
+      { name:"BlueDevil",         x:58, y:62, color:C.pink,   note:"Engine Oil Additive & Oil Flush — available at AutoZone, Walmart, Amazon; stronger brand equity in stop-leak segment; engine treatment line less independently reviewed than oil-focused competitors" },
+    ]
+  },
+  "Oil stop leak": {
+    source: "Sources: The Drive (Best Overall: Lucas 10278); Mechanic Base (Nov 2025) — Lucas best value, BlueDevil premium pick; Auto Quarterly (Dec 2025); Amazon Oil Stop Leak brand list — Lucas, Liqui Moly, BlueDevil, Bar's Leaks, STP, Rislone top brands; BobIsTheOilGuy forum data. Sea Foam removed — not a stop-leak product. Brand-owned sources excluded.",
+    brands: [
+      { name:"Lucas Oil",   x:85, y:88, color:C.red,    note:"10278 Engine Oil Stop Leak — The Drive Best Overall; Mechanic Base best value pick; increases oil pressure while sealing; no harmful solvents; works on small/medium leaks; widely available at AutoZone, Walmart, Amazon; immediate results; not compatible with diesel engines" },
+      { name:"BlueDevil",  x:80, y:85, color:C.pink,   note:"Oil Stop Leak — Mechanic Base premium pick; rated best permanent fix; works in gasoline & diesel engines; compatible with all oil types including full synthetic; widely available at Walmart, AutoZone, Amazon; takes ~200 miles to fully activate; higher price point vs. Lucas" },
+      { name:"ATP AT-205", x:78, y:82, color:C.blue,   note:"Re-Seal Stops Leaks — multi-system versatility (engine, transmission, power steering, hydraulics); fastest activation of any seal rejuvenator; rejuvenates rubber seals without swelling; available at AutoZone and Amazon; BestReviews.guide recommended; small 8oz bottle treats up to 6 quarts" },
+      { name:"Liqui Moly", x:75, y:80, color:C.purple, note:"Motor Oil Saver — best for internal leaks and oil burning/consumption; reduces blue exhaust smoke; top for European vehicles (BMW, Mercedes); available at AutoZone and Walmart; not effective on external gasket leaks; higher price point" },
+      { name:"Bar's Leaks",x:70, y:74, color:C.teal,   note:"Engine Oil Stop Leak Concentrate — available at Walmart and AutoZone; strong value; leaks typically stop within 200 miles; ester-based formula; BobIsTheOilGuy forum recommended for Japanese high-mileage engines" },
+      { name:"Rislone",    x:62, y:65, color:C.sky,    note:"Engine Oil Stop Leak — available at AutoZone, Walmart, Amazon; solid mid-market option; ring seal and compression repair variants also available; good value positioning" },
+      { name:"STP",        x:48, y:52, color:C.gray,   note:"Engine Oil Stop Leak — value tier; mass-market availability at Walmart, AutoZone, gas stations; basic seal swelling chemistry; limited independent editorial coverage vs. premium brands" },
+      { name:"Permatex",   x:55, y:48, color:C.amber,  note:"Spray sealant — external leak repair only; does not condition internal seals; different use case than liquid additives; available at auto parts stores; best for hard-to-reach external gasket leaks" },
+      { name:"Motor Medic",x:42, y:45, color:C.green,  note:"Budget tier; available at AutoZone; basic engine and transmission stop leak functionality; limited independent reviews; entry-level positioning" },
+    ]
+  },
+  "Transmission fix": {
+    source: "Sources: AdditiveHelp; The Review Gurus (Apr 2024); BestReviews.guide 2025 — ATP AT-205 highlighted; Cart Troubleshooters; Breaking Free Mediation; Poppingthehood (Feb 2025); AutoZone product listings. Prolong, Sea Foam Trans Tune, and Permatex removed — limited retail/DTC, cleaning-only focus, or external-only application not applicable to this category. Brand-owned sources excluded.",
+    brands: [
+      { name:"Lucas Oil",   x:85, y:88, color:C.red,    note:"Transmission Fix (10009) — widely regarded as the #1 transmission stop leak additive; AdditiveHelp & Cart Troubleshooters top pick; fast-acting; improves shifting performance alongside sealing; wide compatibility with all transmission types; available at Walmart, AutoZone, NAPA, Amazon; add with every fluid change at 30K-mile intervals" },
+      { name:"ATP AT-205",  x:80, y:84, color:C.blue,   note:"Re-Seal Stops Leaks — multi-system versatility (transmission, engine, power steering, hydraulics); BestReviews.guide recommended; rejuvenates rubber seals without over-swelling; no petroleum distillates; activates within ~5 hours of driving; available at AutoZone, Walmart, Amazon" },
+      { name:"BlueDevil",   x:75, y:80, color:C.pink,   note:"Transmission Sealer — permanently stops minor to moderate leaks; compatible with manual and automatic transmissions including gas and diesel; available at AutoZone, Walmart, Amazon; mixed reviews for severe leaks but strong performance on minor seal shrinkage" },
+      { name:"Bar's Leaks", x:70, y:74, color:C.teal,   note:"Automatic Transmission Repair — ester-based formula; leaks stop within 200 miles or 3 days; CVT-specific variant available (1414); available at Walmart, AutoZone, Amazon; strong value; reduces friction and sludge alongside sealing" },
+      { name:"Liqui Moly",  x:72, y:72, color:C.purple, note:"Gear Oil Additive / Transmission Additive — manual transmission and gear oil use; NOT compatible with automatic transmissions or wet clutch systems; available at AutoZone; strong for European vehicle transmissions; more specialized use case than broad-market competitors" },
+      { name:"STP",         x:42, y:48, color:C.gray,   note:"Transmission Stop Leak — budget-friendly value tier; available at Walmart, AutoZone, gas stations; 12oz bottle for most automatic transmissions; Poppingthehood recommended for cost-conscious buyers; limited independent editorial recognition" },
+      { name:"Motor Medic", x:48, y:50, color:C.green,  note:"M1432 Automatic Transmission Sealer — reliable budget option; available at AutoZone; stops leaks and prevents future issues; straightforward application; limited independent reviews compared to top-tier competitors" },
+    ]
+  }
+};
+
+const TAB_ORDER = [
+  "Full synthetic","High mileage","Synthetic blend","Conventional",
+  "Greases","Fuel treatments",
+  "Spray wax","Ceramic spray","Tire & trim","Interior spray",
+  "Engine oil additive","Oil stop leak","Transmission fix"
+];
+
+let currentCat = "Full synthetic";
+let chartInst = null;
+
+function toTitleCase(str) {
+  return str.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+}
+
+function buildTabs() {
+  const bar = document.getElementById("tabs");
+  bar.innerHTML = TAB_ORDER.map((k, i) =>
+    `<button class="tab${i === 0 ? " active" : ""}" data-cat="${k}">${toTitleCase(k)}</button>`
+  ).join("");
+  bar.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      bar.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentCat = btn.dataset.cat;
+      buildChart(currentCat);
+    });
+  });
+}
+
+function buildChart(catKey) {
+  const cat = CATEGORIES[catKey];
+  const canvas = document.getElementById("qc");
+  const ctx = canvas.getContext("2d");
+  if (chartInst) chartInst.destroy();
+
+  const datasets = cat.brands.map(b => ({
+    label: b.name,
+    data: [{ x: b.x, y: b.y }],
+    backgroundColor: b.color + "cc",
+    borderColor: b.color,
+    borderWidth: 1.5,
+    pointRadius: 7,
+    pointHoverRadius: 10,
+    _note: b.note,
+    _color: b.color,
+  }));
+
+  chartInst = new Chart(ctx, {
+    type: "scatter",
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 250 },
+      layout: { padding: { top: 22, right: 22, bottom: 12, left: 12 } },
+      scales: {
+        x: {
+          min: 0, max: 100,
+          grid: { color: "rgba(255,255,255,0.06)" },
+          border: { color: "rgba(255,255,255,0.14)" },
+          ticks: { display: false }
+        },
+        y: {
+          min: 0, max: 100,
+          grid: { color: "rgba(255,255,255,0.06)" },
+          border: { color: "rgba(255,255,255,0.14)" },
+          ticks: { display: false }
+        }
+      },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    },
+    plugins: [{
+      id: "quadLines",
+      beforeDraw(chart) {
+        const { ctx, chartArea: { left, right, top, bottom } } = chart;
+        const mx = (left + right) / 2, my = (top + bottom) / 2;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.16)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(mx, top); ctx.lineTo(mx, bottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(left, my); ctx.lineTo(right, my); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      },
+      afterDraw(chart) {
+        const { ctx, scales: { x, y } } = chart;
+        ctx.save();
+        chart.data.datasets.forEach(ds => {
+          const pt = ds.data[0];
+          const px = x.getPixelForValue(pt.x);
+          const py = y.getPixelForValue(pt.y);
+          ctx.fillStyle = "#cecece";
+          ctx.font = "10.5px system-ui, sans-serif";
+          ctx.textAlign = pt.x > 50 ? "right" : "left";
+          const ox = pt.x > 50 ? -11 : 11;
+          const oy = pt.y > 50 ? -11 : 16;
+          ctx.fillText(ds.label, px + ox, py + oy);
+        });
+        ctx.restore();
+      }
+    }]
+  });
+
+  canvas.onmousemove = function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const tip = document.getElementById("tip");
+    let found = false;
+    chartInst.data.datasets.forEach((ds, i) => {
+      const meta = chartInst.getDatasetMeta(i);
+      if (meta.data[0]) {
+        const el = meta.data[0];
+        const dx = el.x - mx, dy = el.y - my;
+        if (Math.sqrt(dx * dx + dy * dy) < 14) {
+          tip.style.display = "block";
+          tip.style.left = (mx + 16) + "px";
+          tip.style.top = Math.max(0, my - 12) + "px";
+          tip.innerHTML = `<strong style="color:${ds._color}">${ds.label}</strong><br><span style="color:#999;font-size:10px;">${ds._note}</span>`;
+          found = true;
+        }
+      }
+    });
+    if (!found) tip.style.display = "none";
+  };
+  canvas.onmouseleave = () => { document.getElementById("tip").style.display = "none"; };
+
+  // Legend
+  document.getElementById("legend").innerHTML = cat.brands.map(b =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${b.color}"></div><span>${b.name}</span></div>`
+  ).join("");
+
+  // Source note
+  document.getElementById("sourceNote").textContent = cat.source;
+}
+
+buildTabs();
+buildChart(currentCat);
+</script>
+</body>
+</html>
